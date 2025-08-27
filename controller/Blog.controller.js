@@ -35,9 +35,7 @@ exports.newBlogPost = async (req, res) => {
 exports.getBlog = async (req, res) => {
   try {
     const data = await BlogPost.find();
-    if (!data || data.length === 0) {
-      return res.status(404).json({ msg: "No blog posts found" });
-    }
+    
     res.status(200).json(data);
   } catch (error) {
     console.log("Error fetching blogs:", error);
