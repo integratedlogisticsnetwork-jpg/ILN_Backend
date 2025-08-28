@@ -212,12 +212,38 @@ router.put("/status/:id", async (req, res) => {
 
       await sendEmail({
         to: member.email,
-        subject: "Membership Rejected",
+        subject:
+          "Membership Application Update – Integrated Logistics Network (ILN)",
         html: `
-          <h3>Hello ${member.contactName},</h3>
-          <p>We regret to inform you that your membership has been <strong>rejected</strong>.</p>
-          <p><strong>Reason:</strong> ${reason || "Not specified"}</p>
-        `,
+    <p>Dear ${member.contactName},</p>
+
+    <p>
+      Thank you for your interest in joining the <strong>Integrated Logistics Network (ILN)</strong> and for your patience as we completed our due diligence process.
+    </p>
+
+    <p>
+      We regret to inform you that, based on our due diligence report, we are unable to approve your application for a <strong>secured membership</strong> at this time. 
+      Our secured memberships are reserved for companies that meet specific financial and operational criteria to ensure the highest level of trust and security within our network.
+    </p>
+
+    <p>
+      However, we believe you would still be a valuable addition to the ILN community and would like to extend an <strong>alternative offer</strong>. 
+      You are eligible to join as a <strong>fully paid, insecure member</strong>. 
+      This membership tier offers you all the benefits of our network, including access to our exclusive directory, events, and resources. 
+      The only difference is that your profile in our directory will be highlighted as an 
+      <span style="color: red; font-weight: bold;">INSECURE MEMBER</span> to reflect the outcome of the due diligence process.
+    </p>
+
+    <p>
+      If you would like to proceed with this offer, please reply to this email, and we will send you the necessary information to complete your registration.
+    </p>
+
+    <p>
+      We look forward to the possibility of welcoming you into the Integrated Logistics Network.
+    </p>
+
+    <p>Sincerely,<br/>The ILN Membership Team</p>
+  `,
       });
 
       return res
