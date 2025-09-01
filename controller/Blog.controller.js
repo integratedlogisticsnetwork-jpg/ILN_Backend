@@ -1,5 +1,7 @@
 const BlogPost = require("../models/Blog.model");
 
+// Create new blog post (expects HTML content from React Quill)
+
 exports.newBlogPost = async (req, res) => {
   try {
     const { title, slug, excerpt, content, author, tags } = req.body;
@@ -8,7 +10,23 @@ exports.newBlogPost = async (req, res) => {
       return res.status(400).json({ error: "Cover image is required." });
     }
 
+    if (!content || typeof content !== "string") {
+      return res
+        .status(400)
+        .json({ error: "Blog content (HTML) is required." });
+    }
+
     const coverImage = req.file.secure_url || req.file.path;
+
+    // ✅ Handle schemaMarkup as array (from frontend or Postman)
+    let schemaMarkup = [];
+    if (req.body.schemaMarkup) {
+      if (Array.isArray(req.body.schemaMarkup)) {
+        schemaMarkup = req.body.schemaMarkup;
+      } else {
+        schemaMarkup = [req.body.schemaMarkup];
+      }
+    }
 
     const blogPost = new BlogPost({
       title,
@@ -16,8 +34,12 @@ exports.newBlogPost = async (req, res) => {
       excerpt,
       content,
       author,
-      tags,
+
+      tags: tags?.split(",").map((tag) => tag.trim()),
       coverImage,
+      schemaMarkup, // stored as array
+
+      // likes is not passed intentionally — default is 0
     });
 
     await blogPost.save();
@@ -32,10 +54,13 @@ exports.newBlogPost = async (req, res) => {
   }
 };
 
+// Get all blog posts
 exports.getBlog = async (req, res) => {
   try {
-    const data = await BlogPost.find();
-    
+    const data = await BlogPost.find().sort({
+      datePublished: -1,
+    });
+
     res.status(200).json(data);
   } catch (error) {
     console.log("Error fetching blogs:", error);
@@ -43,9 +68,10 @@ exports.getBlog = async (req, res) => {
   }
 };
 
+// Update blog post by slug
 exports.updateBlogPostBySlug = async (req, res) => {
   const { slug } = req.params;
-  const { title, content, author, excerpt, tags } = req.body;
+  const { title, content, author, excerpt, tags, schemaMarkup } = req.body;
 
   try {
     const updateFields = {
@@ -53,7 +79,10 @@ exports.updateBlogPostBySlug = async (req, res) => {
       ...(content && { content }),
       ...(author && { author }),
       ...(excerpt && { excerpt }),
-      ...(tags && { tags }),
+      ...(tags && { tags: tags.split(",").map((tag) => tag.trim()) }),
+
+      ...(schemaMarkup && { schemaMarkup }), // 🔥 store as-is
+
       lastUpdated: new Date(),
     };
 
@@ -81,6 +110,7 @@ exports.updateBlogPostBySlug = async (req, res) => {
   }
 };
 
+// Delete blog post by slug
 exports.deleteBlogPostBySlug = async (req, res) => {
   const { slug } = req.params;
 
@@ -95,5 +125,40 @@ exports.deleteBlogPostBySlug = async (req, res) => {
   } catch (error) {
     console.error("Delete error:", error.message);
     res.status(500).json({ msg: "Server Error" });
+  }
+};
+
+// Update only cover image
+exports.updateBlogImageBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file uploaded" });
+    }
+
+    // Use Cloudinary URL (secure_url or path)
+    const imageUrl = req.file.secure_url || req.file.path;
+
+    const updatedBlog = await BlogPost.findOneAndUpdate(
+      { slug },
+      {
+        coverImage: imageUrl,
+        lastUpdated: new Date(),
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedBlog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+
+    res.status(200).json({
+      message: "Cover image updated successfully",
+      blog: updatedBlog,
+    });
+  } catch (error) {
+    console.error("Error updating cover image:", error);
+    res.status(500).json({ message: "Error updating cover image", error });
   }
 };

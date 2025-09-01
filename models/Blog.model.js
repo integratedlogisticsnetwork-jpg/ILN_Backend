@@ -23,13 +23,23 @@ const blogPostSchema = new mongoose.Schema({
     required: true,
   },
   coverImage: {
-    type: String, // renamed from 'image' to 'coverImage' for clarity
+    type: String,
     required: true,
   },
   tags: {
     type: [String],
     default: [],
   },
+
+  likes: {
+    type: Number,
+    default: 0,
+  },
+  schemaMarkup: {
+    type: [String], // array of JSON-LD strings
+    default: [],
+  },
+
   datePublished: {
     type: Date,
     default: Date.now,
